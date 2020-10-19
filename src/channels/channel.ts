@@ -2,6 +2,8 @@ import { PresenceChannel } from './presence-channel';
 import { PrivateChannel } from './private-channel';
 import { Log } from './../log';
 
+import axios from 'axios';
+
 export class Channel {
     /**
      * Channels and patters for private channels.
@@ -82,8 +84,25 @@ export class Channel {
             socket.leave(channel);
 
             if (this.options.devMode) {
-                Log.info(`[${new Date().toISOString()}] - ${socket.id} left channel: ${channel} (${reason})`);
+                Log.info(`[${new Date().toISOString()}] - ${socket.id} left channel: ${channel.indexOf('.')} (${reason})`);
             }
+
+            let _channel = channel;
+
+            let index = _channel.indexOf('.');
+
+            axios.post(`${this.options.authHost}/api/stopExposurePush`, {
+                broker_id: _channel.substring(++index)
+            }).then(() => {
+                if (this.options.devMode) {
+                    Log.info(`[${new Date().toISOString()}] - call stopExposurePush successfully~`);
+                }
+            }).catch((error) => {
+                if (this.options.devMode) {
+                    Log.error(`[${new Date().toISOString()}] - call stopExposurePush fail, with error: ${error}`);
+                }
+            });
+
         }
     }
 
